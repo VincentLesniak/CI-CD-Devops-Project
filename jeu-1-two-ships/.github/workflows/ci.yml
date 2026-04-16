@@ -1,0 +1,130 @@
+name: Pipeline CI Two Ship
+
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+    branches:
+      - main
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+jobs:
+  job-build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v5
+      - name: Configuration de Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: 'npm' # Active la mise en cache ici
+      - name: Installation des dépendances
+        run: npm install
+
+  job-audit:
+    needs: job-build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v5
+      - name: Configuration de Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: 'npm' # Récupère le cache créé par job-build
+      - name: Installation des dépendances
+        # Cette étape sera quasi-instantanée grâce au cache
+        run: npm install
+      - name: Audit des dépendances
+        run: npm audit
+
+  job-lint:
+    needs: job-build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v5
+      - name: Configuration de Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: 'npm'
+      - name: Installation des dépendances
+        run: npm install
+      - name: Linter
+        run: npm run lint
+
+  job-test:
+    needs: job-build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v5
+      - name: Configuration de Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: 'npm'
+      - name: Installation des dépendances
+        run: npm install
+      - name: Lancement des tests unitaires
+        run: npm run test
+
+  job-test-fonctionnel:
+    needs: job-build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v5
+
+      - name: Configuration de Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Installation des dépendances
+        run: npm install
+
+      - name: Lancement des tests e2e
+        run: npx cypress run
+
+      - name: Capture d'écran
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: erreur-cypress
+          # indique ou recuperer la capture
+          path: cypress/screenshots/
+
+  job-summary:
+      needs: [job-test, job-lint, job-audit, job-test-fonctionnel]
+      if: always()
+      runs-on: ubuntu-22.04
+      steps:
+        - name: Téléchargement de la capture
+          #vérifie strictement si le travail de test a un statut d'échec
+          if: needs.job-test-fonctionnel.result == 'failure'
+          uses: actions/download-artifact@v5
+          with:
+            name: erreur-cypress
+            path: image-recuperee
+
+        - name: Génération du résumé global
+          run: |
+            echo "## Bilan de l'exécution" >> $GITHUB_STEP_SUMMARY
+            echo "- Audit : ${{ needs.job-audit.result }}" >> $GITHUB_STEP_SUMMARY
+            echo "- Linter : ${{ needs.job-lint.result }}" >> $GITHUB_STEP_SUMMARY
+            echo "- Tests Unitaires : ${{ needs.job-test.result }}" >> $GITHUB_STEP_SUMMARY
+            echo "- Tests Fonctionnels : ${{ needs.job-test-fonctionnel.result }}" >> $GITHUB_STEP_SUMMARY
+          
+            if [ -d "image-recuperee" ]; then
+              echo "### Erreur visuelle détectée" >> $GITHUB_STEP_SUMMARY
+              echo "Un test fonctionnel a échoué. Télécharge l'archive **erreur-cypress** dans la section *Artifacts* pour visionner la capture d'écran." >> $GITHUB_STEP_SUMMARY
+            fi
