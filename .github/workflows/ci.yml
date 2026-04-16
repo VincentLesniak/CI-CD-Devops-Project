@@ -27,6 +27,8 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm' # Active la mise en cache ici
+          # pointe vers le fichier de verrouillage déplacé
+          cache-dependency-path: './jeu-1-two-ships/package-lock.json'
       - name: Installation des dépendances
         run: npm install
 
@@ -44,6 +46,7 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm' # Récupère le cache créé par job-build
+          cache-dependency-path: './jeu-1-two-ships/package-lock.json'
       - name: Installation des dépendances
         # Cette étape sera quasi-instantanée grâce au cache
         run: npm install
@@ -64,6 +67,8 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
+          # précise où chercher les dépendances
+          cache-dependency-path: './jeu-1-two-ships/package-lock.json'
       - name: Installation des dépendances
         run: npm install
       - name: Linter
@@ -83,6 +88,7 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
+          cache-dependency-path: './jeu-1-two-ships/package-lock.json'
       - name: Installation des dépendances
         run: npm install
       - name: Lancement des tests unitaires
@@ -103,6 +109,7 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
+          cache-dependency-path: './jeu-1-two-ships/package-lock.json'
 
       - name: Installation des dépendances
         run: npm install
