@@ -16,6 +16,9 @@ permissions:
 jobs:
   job-build:
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: ./jeu-1-two-ships
     steps:
       - name: Récupération du code
         uses: actions/checkout@v5
@@ -30,6 +33,9 @@ jobs:
   job-audit:
     needs: job-build
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: ./jeu-1-two-ships
     steps:
       - name: Récupération du code
         uses: actions/checkout@v5
@@ -47,6 +53,9 @@ jobs:
   job-lint:
     needs: job-build
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: ./jeu-1-two-ships
     steps:
       - name: Récupération du code
         uses: actions/checkout@v5
@@ -63,6 +72,9 @@ jobs:
   job-test:
     needs: job-build
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: ./jeu-1-two-ships
     steps:
       - name: Récupération du code
         uses: actions/checkout@v5
@@ -79,6 +91,9 @@ jobs:
   job-test-fonctionnel:
     needs: job-build
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: ./jeu-1-two-ships
     steps:
       - name: Récupération du code
         uses: actions/checkout@v5
@@ -101,7 +116,8 @@ jobs:
         with:
           name: erreur-cypress
           # indique ou recuperer la capture
-          path: cypress/screenshots/
+          #met à jour le chemin avec le nouveau dossier parent
+          path: jeu-1-two-ships/cypress/screenshots/
 
   job-summary:
       needs: [job-test, job-lint, job-audit, job-test-fonctionnel]
