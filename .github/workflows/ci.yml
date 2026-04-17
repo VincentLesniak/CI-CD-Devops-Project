@@ -173,12 +173,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: repo_tolower=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-      #crée l'image de la vitrine
-      - run: docker build -t ghcr.io/$repo_tolower/portail:latest ./portail-web
-      # pousse la vitrine dans l'entrepôt
-      - run: docker push ghcr.io/$repo_tolower/portail:latest
-      #génère l'image du jeu
-      - run: docker build -t ghcr.io/$repo_tolower/two-ships:latest ./jeu-1-two-ships
-      # rend le jeu disponible en ligne
-      - run: docker push ghcr.io/$repo_tolower/two-ships:latest
+      #sauvegarde le nom en minuscules dans la mémoire globale du serveur
+      - run: echo "repo_tolower=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      # utilise la mémoire globale pour compiler
+      - run: docker build -t ghcr.io/${{ env.repo_tolower }}/portail:latest ./portail-web
+      #expédie la vitrine
+      - run: docker push ghcr.io/${{ env.repo_tolower }}/portail:latest
+      # assemble le jeu
+      - run: docker build -t ghcr.io/${{ env.repo_tolower }}/two-ships:latest ./jeu-1-two-ships
+      #pousse le conteneur en ligne
+      - run: docker push ghcr.io/${{ env.repo_tolower }}/two-ships:latest
