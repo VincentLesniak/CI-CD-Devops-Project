@@ -151,3 +151,32 @@ jobs:
               echo "### Erreur visuelle détectée" >> $GITHUB_STEP_SUMMARY
               echo "Un test fonctionnel a échoué. Télécharge l'archive **erreur-cypress** dans la section *Artifacts* pour visionner la capture d'écran." >> $GITHUB_STEP_SUMMARY
             fi
+  job-docker:
+    #attend la fin des tests
+    needs: [job-test, job-lint, job-audit, job-test-fonctionnel]
+    # s'exécute si tout est vert
+    if: success()
+    #choisit le système
+    runs-on: ubuntu-22.04
+    permissions:
+      # autorise la lecture du code
+      contents: read
+      # donne les accès pour les images
+      packages: write
+    steps:
+      #télécharge le code
+      - uses: actions/checkout@v5
+      # identifie le compte sur le serveur
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      #crée l'image de la vitrine
+      - run: docker build -t ghcr.io/${{ github.repository }}/portail:latest ./portail-web
+      # pousse la vitrine dans l'entrepôt
+      - run: docker push ghcr.io/${{ github.repository }}/portail:latest
+      #génère l'image du jeu
+      - run: docker build -t ghcr.io/${{ github.repository }}/two-ships:latest ./jeu-1-two-ships
+      # rend le jeu disponible en ligne
+      - run: docker push ghcr.io/${{ github.repository }}/two-ships:latest
