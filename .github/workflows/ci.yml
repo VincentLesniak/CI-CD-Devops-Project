@@ -7,13 +7,12 @@ on:
     branches:
       - main
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 permissions:
   contents: read
 
 jobs:
+  env:
+    FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   job-build:
     runs-on: ubuntu-22.04
     defaults:
@@ -33,6 +32,8 @@ jobs:
         run: npm install
 
   job-audit:
+  env:
+    FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     needs: job-build
     runs-on: ubuntu-22.04
     defaults:
@@ -54,6 +55,8 @@ jobs:
         run: npm audit
 
   job-lint:
+  env:
+    FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     needs: job-build
     runs-on: ubuntu-22.04
     defaults:
@@ -75,6 +78,8 @@ jobs:
         run: npm run lint
 
   job-test:
+  env:
+    FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     needs: job-build
     runs-on: ubuntu-22.04
     defaults:
@@ -95,6 +100,8 @@ jobs:
         run: npm run test
 
   job-test-fonctionnel:
+  env:
+    FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     needs: job-build
     runs-on: ubuntu-22.04
     defaults:
