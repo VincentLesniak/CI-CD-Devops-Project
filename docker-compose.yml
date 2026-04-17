@@ -1,0 +1,14 @@
+services:
+
+  portail:
+    image: ghcr.io/vincentlesniak/ci-cd-devops-project/portail:latest
+    restart: always
+    ports:
+      - "8080:80"
+
+  jeu-1:
+    image: ghcr.io/vincentlesniak/ci-cd-devops-project/two-ships:latest
+    restart: always
+    ports:
+# attribue le port 8081 pour éviter les conflits
+      - "8081:80"
