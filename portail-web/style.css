@@ -1,0 +1,83 @@
+/* defining my colors here so I can change them easily later */
+:root {
+  --bg-color: #0d0d0d;
+  --neon-color: #00f2ff;
+  --neon-alt: #ff00ea;
+  --text-color: #ffffff;
+  --grid-gap: 20px;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+
+.main_container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--grid-gap);
+  max-width: 800px;
+  width: 100%;
+}
+
+h1 {
+  grid-column: span 2;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 5px;
+  color: var(--neon-color);
+  text-shadow: 0 0 10px var(--neon-color), 0 0 20px var(--neon-color);
+  margin-bottom: 40px;
+}
+
+.game_card {
+  display: block;
+  position: relative;
+  border: 2px solid var(--neon-color);
+  border-radius: 15px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 0 5px var(--neon-color);
+  aspect-ratio: 16 / 9; 
+  margin: 30px;
+  width: 25vw;
+}
+
+.game_card:hover {
+  transform: scale(1.05);
+  border-color: var(--neon-alt);
+  box-shadow: 0 0 20px var(--neon-alt);
+}
+
+.game_picture {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: opacity 0.4s ease;
+}
+
+.static {
+  opacity: 1;
+  z-index: 2;
+}
+
+.active {
+  opacity: 0;
+  z-index: 1;
+}
+
+.game_card:hover .static {
+  opacity: 0;
+}
+
+.game_card:hover .active {
+  opacity: 1;
+}
