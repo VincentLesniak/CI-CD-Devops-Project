@@ -177,9 +177,51 @@ jobs:
       - run: echo "repo_tolower=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
       # utilise la mémoire globale pour compiler
       - run: docker build -t ghcr.io/${{ env.repo_tolower }}/portail:latest ./portail-web
-      #expédie la vitrine
+      #expédie le hub
       - run: docker push ghcr.io/${{ env.repo_tolower }}/portail:latest
       # assemble le jeu
       - run: docker build -t ghcr.io/${{ env.repo_tolower }}/two-ships:latest ./jeu-1-two-ships
       #pousse le conteneur en ligne
       - run: docker push ghcr.io/${{ env.repo_tolower }}/two-ships:latest
+
+  job-pages:
+    needs: job-docker
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      # autorise l'écriture sur les pages
+      pages: write
+      #génère le jeton d'identité
+      id-token: write
+    #définit l'environnement de déploiement
+    environment:
+      #cible le service natif
+      name: github-pages
+      #récupère l'adresse finale
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: './jeu-1-two-ships/package-lock.json'
+      - run: |
+          cd jeu-1-two-ships
+          npm install
+          npm run build
+        #rassemble le hub et le jeu dans un dossier unique
+      - run: |
+          mkdir public
+          cp -r portail-web/* public/
+          mkdir public/jeu-1-two-ships
+          cp -r jeu-1-two-ships/dist/* public/jeu-1-two-ships/
+        #prépare l'archive pour le serveur
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          #cible le dossier compilé
+          path: public/
+        #déploie le site sur internet
+      - id: deployment
+        #exécute l'action de publication
+        uses: actions/deploy-pages@v4

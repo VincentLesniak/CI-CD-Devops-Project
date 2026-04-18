@@ -7,5 +7,7 @@ RUN rm -rf /usr/share/nginx/html/*
 #copie absolument tout le contenu du dossier actuel vers le serveur
 COPY . /usr/share/nginx/html/
 
-# autorise les connexions extérieures sur le port web
+#remplace la configuration réseau d'origine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 EXPOSE 80
