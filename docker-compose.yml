@@ -3,11 +3,13 @@ services:
   portail:
     image: ghcr.io/vincentlesniak/ci-cd-devops-project/portail:latest
     restart: always
+    build: ./portail-web
     ports:
       - "8080:80"
 
   jeu-1:
     image: ghcr.io/vincentlesniak/ci-cd-devops-project/two-ships:latest
     restart: always
+    build: ./jeu-1-two-ships
     ports:
       - "80"
