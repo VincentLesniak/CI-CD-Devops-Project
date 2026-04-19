@@ -90,7 +90,7 @@ jobs:
       - name: Linter
         run: npm run lint
 
-  job-test:
+job-test:
     needs: job-build
     runs-on: ubuntu-22.04
     defaults:
@@ -109,22 +109,14 @@ jobs:
         run: npm install
 
       - name: Lancement des tests unitaires
-        #exécute le script et enferme le texte produit dans un document sans arrêter la machine
-        run: npm run test > rapport-tests.txt || true
+        run: npm run test > rapport-tests.txt
 
       - name: Création de l'artefact
         if: always()
-        #appelle l'outil de création de paquet
         uses: actions/upload-artifact@v5
         with:
           name: preuve-tests
-          #cible le document texte généré à l'étape précédente
           path: jeu-1-two-ships/rapport-tests.txt
-
-      - name: Analyse du résultat final
-        if: always()
-        # cherche un mot signifiant l'échec et fait planter la machine si on le trouve
-        run: grep -qi "fail" rapport-tests.txt && exit 1 || exit 0
 
   job-test-fonctionnel:
     needs: job-build
