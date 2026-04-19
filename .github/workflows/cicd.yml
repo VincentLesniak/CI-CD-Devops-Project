@@ -45,13 +45,29 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: '24'
-          cache: 'npm' # Récupère le cache créé par job-build
+          cache: 'npm'
           cache-dependency-path: './jeu-1-two-ships/package-lock.json'
+
       - name: Installation des dépendances
-        # Cette étape sera quasi-instantanée grâce au cache
         run: npm install
+
       - name: Audit des dépendances
-        run: npm audit
+        run: npm audit > rapport-audit.txt 
+
+      - name: Affichage dans le résumé
+        if: always()
+        run: |
+          echo "### Résultat brut de l'audit" >> $GITHUB_STEP_SUMMARY
+          echo '```text' >> $GITHUB_STEP_SUMMARY
+          cat rapport-audit.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Création de l'artefact
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: preuve-audit
+          path: jeu-1-two-ships/rapport-audit.txt
 
   job-lint:
     needs: job-build
@@ -91,8 +107,24 @@ jobs:
           cache-dependency-path: './jeu-1-two-ships/package-lock.json'
       - name: Installation des dépendances
         run: npm install
+
       - name: Lancement des tests unitaires
-        run: npm run test
+        #exécute le script et enferme le texte produit dans un document sans arrêter la machine
+        run: npm run test > rapport-tests.txt || true
+
+      - name: Création de l'artefact
+        if: always()
+        #appelle l'outil de création de paquet
+        uses: actions/upload-artifact@v5
+        with:
+          name: preuve-tests
+          #cible le document texte généré à l'étape précédente
+          path: jeu-1-two-ships/rapport-tests.txt
+
+      - name: Analyse du résultat final
+        if: always()
+        # cherche un mot signifiant l'échec et fait planter la machine si on le trouve
+        run: grep -qi "fail" rapport-tests.txt && exit 1 || exit 0
 
   job-test-fonctionnel:
     needs: job-build
@@ -151,6 +183,7 @@ jobs:
               echo "### Erreur visuelle détectée" >> $GITHUB_STEP_SUMMARY
               echo "Un test fonctionnel a échoué. Télécharge l'archive **erreur-cypress** dans la section *Artifacts* pour visionner la capture d'écran." >> $GITHUB_STEP_SUMMARY
             fi
+            
   job-docker:
     #attend la fin des tests
     needs: [job-test, job-lint, job-audit, job-test-fonctionnel]
@@ -181,7 +214,7 @@ jobs:
       - run: docker push ghcr.io/${{ env.repo_tolower }}/portail:latest
       # assemble le jeu
       - run: docker build -t ghcr.io/${{ env.repo_tolower }}/two-ships:latest ./jeu-1-two-ships
-      #pousse le conteneur en ligne
+      #push le conteneur en ligne
       - run: docker push ghcr.io/${{ env.repo_tolower }}/two-ships:latest
 
   job-pages:
