@@ -1,0 +1,60 @@
+name: CD Déploiement Global
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+  packages: write
+  pages: write
+  id-token: write
+
+jobs:
+  job-docker:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - run: echo "repo_tolower=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      - run: docker build -t ghcr.io/${{ env.repo_tolower }}/portail:latest ./portail-web
+      - run: docker push ghcr.io/${{ env.repo_tolower }}/portail:latest
+      - run: docker build -t ghcr.io/${{ env.repo_tolower }}/two-ships:latest ./jeu-1-two-ships
+      - run: docker push ghcr.io/${{ env.repo_tolower }}/two-ships:latest
+
+  job-pages:
+    needs: job-docker
+    runs-on: ubuntu-22.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: './jeu-1-two-ships/package-lock.json'
+      - run: |
+          cd jeu-1-two-ships
+          npm install
+          npm run build
+      - run: |
+          mkdir public
+          cp -r portail-web/* public/
+          mkdir public/jeu-1-two-ships
+          cp -r jeu-1-two-ships/dist/* public/jeu-1-two-ships/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public/
+      - id: deployment
+        uses: actions/deploy-pages@v4

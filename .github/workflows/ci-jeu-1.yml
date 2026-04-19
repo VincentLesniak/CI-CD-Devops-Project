@@ -1,11 +1,17 @@
-name: Pipeline CI/CD JeuVideOps
+name: CI Jeu 1 - two ships in the night
 
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
+    paths:
+      - 'jeu-1-two-ships/**'
   pull_request:
     branches:
       - main
+    paths:
+      - 'jeu-1-two-ships/**'
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -26,8 +32,7 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: '24'
-          cache: 'npm' # Active la mise en cache ici
-          # pointe vers le fichier de verrouillage déplacé
+          cache: 'npm'
           cache-dependency-path: './jeu-1-two-ships/package-lock.json'
       - name: Installation des dépendances
         run: npm install
@@ -47,13 +52,10 @@ jobs:
           node-version: '24'
           cache: 'npm'
           cache-dependency-path: './jeu-1-two-ships/package-lock.json'
-
       - name: Installation des dépendances
         run: npm install
-
       - name: Audit des dépendances
-        run: npm audit > rapport-audit.txt 
-
+        run: npm audit > rapport-audit.txt
       - name: Affichage dans le résumé
         if: always()
         run: |
@@ -61,7 +63,6 @@ jobs:
           echo '```text' >> $GITHUB_STEP_SUMMARY
           cat rapport-audit.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-
       - name: Création de l'artefact
         if: always()
         uses: actions/upload-artifact@v5
@@ -83,7 +84,6 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
-          # précise où chercher les dépendances
           cache-dependency-path: './jeu-1-two-ships/package-lock.json'
       - name: Installation des dépendances
         run: npm install
@@ -99,20 +99,16 @@ jobs:
     steps:
       - name: Récupération du code
         uses: actions/checkout@v5
-
       - name: Configuration de Node.js
         uses: actions/setup-node@v5
         with:
           node-version: '24'
           cache: 'npm'
           cache-dependency-path: './jeu-1-two-ships/package-lock.json'
-
       - name: Installation des dépendances
         run: npm install
-
       - name: Lancement des tests unitaires
         run: npm run test > rapport-tests.txt 2>&1
-
       - name: Affichage dans le résumé
         if: always()
         run: |
@@ -120,7 +116,6 @@ jobs:
           echo '```text' >> $GITHUB_STEP_SUMMARY
           cat rapport-tests.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-
       - name: Création de l'artefact
         if: always()
         uses: actions/upload-artifact@v5
@@ -137,126 +132,42 @@ jobs:
     steps:
       - name: Récupération du code
         uses: actions/checkout@v5
-
       - name: Configuration de Node.js
         uses: actions/setup-node@v5
         with:
           node-version: '24'
           cache: 'npm'
           cache-dependency-path: './jeu-1-two-ships/package-lock.json'
-
       - name: Installation des dépendances
         run: npm install
-
       - name: Lancement des tests e2e
         run: npx cypress run
-
       - name: Capture d'écran
         if: failure()
         uses: actions/upload-artifact@v5
         with:
           name: erreur-cypress
-          # indique ou recuperer la capture
-          #met à jour le chemin avec le nouveau dossier parent
           path: jeu-1-two-ships/cypress/screenshots/
 
   job-summary:
-      needs: [job-test, job-lint, job-audit, job-test-fonctionnel]
-      if: always()
-      runs-on: ubuntu-22.04
-      steps:
-        - name: Téléchargement de la capture
-          #vérifie strictement si le travail de test a un statut d'échec
-          if: needs.job-test-fonctionnel.result == 'failure'
-          uses: actions/download-artifact@v5
-          with:
-            name: erreur-cypress
-            path: image-recuperee
-
-        - name: Génération du résumé global
-          run: |
-            echo "## Bilan de l'exécution" >> $GITHUB_STEP_SUMMARY
-            echo "- Audit : ${{ needs.job-audit.result }}" >> $GITHUB_STEP_SUMMARY
-            echo "- Linter : ${{ needs.job-lint.result }}" >> $GITHUB_STEP_SUMMARY
-            echo "- Tests Unitaires : ${{ needs.job-test.result }}" >> $GITHUB_STEP_SUMMARY
-            echo "- Tests Fonctionnels : ${{ needs.job-test-fonctionnel.result }}" >> $GITHUB_STEP_SUMMARY
-          
-            if [ -d "image-recuperee" ]; then
-              echo "### Erreur visuelle détectée" >> $GITHUB_STEP_SUMMARY
-              echo "Un test fonctionnel a échoué. Télécharge l'archive **erreur-cypress** dans la section *Artifacts* pour visionner la capture d'écran." >> $GITHUB_STEP_SUMMARY
-            fi
-            
-  job-docker:
-    #attend la fin des tests
     needs: [job-test, job-lint, job-audit, job-test-fonctionnel]
-    # s'exécute si tout est vert
-    if: success()
-    #choisit le système
+    if: always()
     runs-on: ubuntu-22.04
-    permissions:
-      # autorise la lecture du code
-      contents: read
-      # donne les accès pour les images
-      packages: write
     steps:
-      #télécharge le code
-      - uses: actions/checkout@v5
-      # identifie le compte sur le serveur
-      - uses: docker/login-action@v3
+      - name: Téléchargement de la capture
+        if: needs.job-test-fonctionnel.result == 'failure'
+        uses: actions/download-artifact@v5
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      #sauvegarde le nom en minuscules dans la mémoire globale du serveur
-      - run: echo "repo_tolower=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-      # utilise la mémoire globale pour compiler
-      - run: docker build -t ghcr.io/${{ env.repo_tolower }}/portail:latest ./portail-web
-      #expédie le hub
-      - run: docker push ghcr.io/${{ env.repo_tolower }}/portail:latest
-      # assemble le jeu
-      - run: docker build -t ghcr.io/${{ env.repo_tolower }}/two-ships:latest ./jeu-1-two-ships
-      #push le conteneur en ligne
-      - run: docker push ghcr.io/${{ env.repo_tolower }}/two-ships:latest
-
-  job-pages:
-    needs: job-docker
-    runs-on: ubuntu-22.04
-    permissions:
-      contents: read
-      # autorise l'écriture sur les pages
-      pages: write
-      #génère le jeton d'identité
-      id-token: write
-    #définit l'environnement de déploiement
-    environment:
-      #cible le service natif
-      name: github-pages
-      #récupère l'adresse finale
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version: '24'
-          cache: 'npm'
-          cache-dependency-path: './jeu-1-two-ships/package-lock.json'
-      - run: |
-          cd jeu-1-two-ships
-          npm install
-          npm run build
-        #rassemble le hub et le jeu dans un dossier unique
-      - run: |
-          mkdir public
-          cp -r portail-web/* public/
-          mkdir public/jeu-1-two-ships
-          cp -r jeu-1-two-ships/dist/* public/jeu-1-two-ships/
-        #prépare l'archive pour le serveur
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          #cible le dossier compilé
-          path: public/
-        #déploie le site sur internet
-      - id: deployment
-        #exécute l'action de publication
-        uses: actions/deploy-pages@v4
+          name: erreur-cypress
+          path: image-recuperee
+      - name: Génération du résumé global
+        run: |
+          echo "## Bilan de l'exécution" >> $GITHUB_STEP_SUMMARY
+          echo "- Audit : ${{ needs.job-audit.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Linter : ${{ needs.job-lint.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Tests Unitaires : ${{ needs.job-test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Tests Fonctionnels : ${{ needs.job-test-fonctionnel.result }}" >> $GITHUB_STEP_SUMMARY
+          if [ -d "image-recuperee" ]; then
+            echo "### Erreur visuelle détectée" >> $GITHUB_STEP_SUMMARY
+            echo "Un test fonctionnel a échoué. Télécharge l'archive **erreur-cypress** dans la section *Artifacts* pour visionner la capture d'écran." >> $GITHUB_STEP_SUMMARY
+          fi

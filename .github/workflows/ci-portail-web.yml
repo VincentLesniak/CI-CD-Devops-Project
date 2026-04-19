@@ -1,0 +1,30 @@
+name: CI Portail Web
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'portail-web/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'portail-web/**'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+jobs:
+  job-build-portail:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: ./portail-web
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v5
