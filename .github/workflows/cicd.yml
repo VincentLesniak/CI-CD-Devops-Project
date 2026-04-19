@@ -90,7 +90,7 @@ jobs:
       - name: Linter
         run: npm run lint
 
-job-test:
+  job-test:
     needs: job-build
     runs-on: ubuntu-22.04
     defaults:
