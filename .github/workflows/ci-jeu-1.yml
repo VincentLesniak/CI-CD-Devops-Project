@@ -3,8 +3,6 @@ name: CI Jeu 1 - two ships in the night
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
     paths:
       - 'jeu-1-two-ships/**'
   pull_request:
