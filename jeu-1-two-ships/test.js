@@ -1,4 +1,9 @@
-import {randFloatSpread, mapLinear, lerp, clamp, randFloat} from './src/math.js';
+import {
+  randFloatSpread, 
+  mapLinear, 
+  lerp, 
+  clamp, 
+  randFloat} from './src/math.js';
 
 let erreurs = 0;
 const test1 = randFloatSpread(1);
@@ -9,15 +14,15 @@ const test5 = lerp(1, 3, 20);
 const test6 = lerp(1.3, -7, 2);
 
 
-//prépare le test pour un chiffre normal
+// prépare le test pour un chiffre normal
 const test7 = clamp(5, 0, 10);
-//simule le franchissement du plafond
+// simule le franchissement du plafond
 const test8 = clamp(15, 0, 10);
-//simule la descente sous le plancher
+// simule la descente sous le plancher
 const test9 = clamp(-5, 0, 10);
-//lance la génération aléatoire entre cinq et dix
+// lance la génération aléatoire entre cinq et dix
 const test10 = randFloat(5, 10);
-//effectue une seconde passe avec les mêmes limites
+// effectue une seconde passe avec les mêmes limites
 const test11 = randFloat(5, 10);
 
 
