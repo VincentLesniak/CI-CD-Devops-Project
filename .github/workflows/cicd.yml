@@ -99,17 +99,27 @@ jobs:
     steps:
       - name: Récupération du code
         uses: actions/checkout@v5
+
       - name: Configuration de Node.js
         uses: actions/setup-node@v5
         with:
           node-version: '24'
           cache: 'npm'
           cache-dependency-path: './jeu-1-two-ships/package-lock.json'
+
       - name: Installation des dépendances
         run: npm install
 
       - name: Lancement des tests unitaires
-        run: npm run test > rapport-tests.txt
+        run: npm run test > rapport-tests.txt 2>&1
+
+      - name: Affichage dans le résumé
+        if: always()
+        run: |
+          echo "### Résultat brut des tests" >> $GITHUB_STEP_SUMMARY
+          echo '```text' >> $GITHUB_STEP_SUMMARY
+          cat rapport-tests.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Création de l'artefact
         if: always()
