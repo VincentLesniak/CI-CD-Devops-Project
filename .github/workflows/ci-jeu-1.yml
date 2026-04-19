@@ -3,14 +3,9 @@ name: CI Jeu 1 - two ships in the night
 on:
   workflow_dispatch:
   push:
-    paths:
-      - 'jeu-1-two-ships/**'
   pull_request:
     branches:
       - main
-    paths:
-      - 'jeu-1-two-ships/**'
-
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
