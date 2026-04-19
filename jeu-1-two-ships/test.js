@@ -1,9 +1,5 @@
-import {
-  randFloatSpread, 
-  mapLinear, 
-  lerp, 
-  clamp, 
-  randFloat} from './src/math.js';
+import {randFloatSpread, mapLinear, lerp} from './src/math.js';
+import {clamp, randFloat} from './src/math.js';
 
 let erreurs = 0;
 const test1 = randFloatSpread(1);
