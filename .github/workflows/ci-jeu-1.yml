@@ -1,4 +1,4 @@
-name: CI Jeu 1 - two ships in the night
+name: CI Jeu 1
 
 on:
   workflow_dispatch:
