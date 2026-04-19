@@ -1,4 +1,4 @@
-name: CI Portail Web
+name: CI Portail
 
 on:
   workflow_dispatch:
